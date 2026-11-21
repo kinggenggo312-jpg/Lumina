@@ -1,5 +1,5 @@
 import{auth,db,F,login,signOut,onAuthStateChanged,$,esc,embed,ensureUser}from"./firebase.js";
-let U,cats=[],stack=[],M={},SS={};
+let U,isAdmin=false,cats=[],stack=[],M={},SS={};
 const v=h=>$("#v").innerHTML=h;
 const col=(...p)=>F.collection(db,...p);
 const list=async(n,id)=>(await F.getDocs(F.query(col(n),F.where("category","==",id),F.where("status","==","terbit")))).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order||0)-(b.order||0));
@@ -8,6 +8,7 @@ const bk=(fn,t="Kembali")=>`<button class="back" onclick="${fn}">← ${t}</butto
 const empty=t=>`<p class="empty">${t}</p>`;
 const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 const dt=t=>t?new Date(t).toLocaleString("id-ID",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+const ADM=`<a class="c go" href="admin.html"><span class="t"><b>Panel Admin</b><small>Kelola kategori, materi, dan soal</small></span><span class="ch">›</span></a>`;
 const card=(fn,label)=>`<button class="c go" onclick="${fn}"><span>${label}</span><span class="ch">›</span></button>`;
 
 $("#login").onclick=login;
@@ -16,7 +17,7 @@ $("#out").onclick=()=>signOut(auth);
 onAuthStateChanged(auth,async u=>{
   U=u;$("#auth").hidden=!!u;$("#app").hidden=!u;
   if(!u)return;
-  await ensureUser(u);
+  isAdmin=(await ensureUser(u))=="admin";
   cats=(await F.getDocs(col("categories"))).docs.map(d=>({id:d.id,...d.data()}));
   home();
 });
@@ -26,7 +27,7 @@ window.back=()=>{stack.pop();home()};
 window.home=()=>{
   const cur=stack.at(-1)||"",me=cats.find(c=>c.id==cur);
   const kids=cats.filter(c=>(c.parent||"")==cur).sort((a,b)=>(a.order||0)-(b.order||0)).map(k=>card(`go('${k.id}')`,esc(k.name)));
-  if(!cur)return v("<h2>Pilih kelas</h2>"+(kids.length?`<div class="grid">${kids.join("")}</div>`:empty("Belum ada kategori. Admin perlu menambahkannya dulu.")));
+  if(!cur)return v((isAdmin?ADM:"")+"<h2>Pilih kelas</h2>"+(kids.length?`<div class="grid">${kids.join("")}</div>`:empty("Belum ada kategori. Admin perlu menambahkannya dulu.")));
   const par=cats.find(c=>c.id==me.parent);
   v(`${bk("back()")}${par?`<small class="crumb">${esc(path(par))}</small>`:""}<h2>${esc(me.name)}</h2>
   <div class="row"><button class="act" onclick="mats('${cur}')"><b>Materi</b><small>Baca dan tonton</small></button><button class="act" onclick="sets('${cur}')"><b>Latihan soal</b><small>Uji pemahamanmu</small></button></div>

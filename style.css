@@ -11,7 +11,7 @@ header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-betwee
 .brand{font-weight:800;font-size:1.15rem}
 .brand::before{content:"";display:inline-block;width:11px;height:11px;border-radius:4px;background:var(--pri);margin-right:8px}
 .hdr{display:flex;gap:6px}
-header button,.tg{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.82rem;color:var(--ink)}
+header button,header a,.tg{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.82rem;color:var(--ink)}
 main{max-width:640px;margin:0 auto;padding:4px 16px 48px}
 #auth{max-width:380px;margin:0 auto;padding:22vh 24px 0;text-align:center}
 #auth h1{font-size:2rem;margin:0 0 6px}
@@ -69,3 +69,5 @@ nav button{flex:none;border-radius:999px;padding:8px 16px}
 .ib{position:fixed;left:12px;right:12px;bottom:12px;max-width:616px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--sf);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:9}
 .ib span{flex:1;font-size:.9rem}
 .ib button{padding:8px 14px}
+header a{text-decoration:none;color:var(--ink)}
+a.c{text-decoration:none;color:var(--ink)}

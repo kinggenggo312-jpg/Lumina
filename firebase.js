@@ -13,7 +13,7 @@ const app=initializeApp({
 
 export const auth=getAuth(app),db=F.getFirestore(app);
 export{signOut,onAuthStateChanged,F};
-export const login=()=>signInWithPopup(auth,new GoogleAuthProvider());
+export const login=()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});return signInWithPopup(auth,p)};
 export const $=s=>document.querySelector(s);
 export const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
