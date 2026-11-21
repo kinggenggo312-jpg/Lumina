@@ -76,5 +76,25 @@ window.quiz=async(sid,cid)=>{
 window.hist=async()=>{
   const s=await F.getDocs(F.query(col("users",U.uid,"attempts"),F.orderBy("at","desc"),F.limit(30)));
   v(`<button onclick="home()">← Kembali</button><h2>Riwayat</h2>`+(s.docs.map(d=>{const a=d.data(),c=cats.find(x=>x.id==a.cat);
-    return`<div class="c"><b>${esc(c?.name||"Bab dihapus")}${a.name?" · "+esc(a.name):""}</b><br>Skor ${a.score}, ${a.ok} dari ${a.total} benar, ${a.sec} detik<br><small>${new Date(a.at).toLocaleString("id-ID")}</small></div>`}).join("")||"<p>Belum ada riwayat. Kerjakan latihan pertamamu.</p>"));
+    return`<div class="c"><button class="d" onclick="delHist('${d.id}')">Hapus</button><b>${esc(c?.name||"Bab dihapus")}${a.name?" · "+esc(a.name):""}</b><br>Skor ${a.score}, ${a.ok} dari ${a.total} benar, ${a.sec} detik<br><small>${new Date(a.at).toLocaleString("id-ID")}</small></div>`}).join("")+(s.size?`<button class="c no" onclick="delAll()">Hapus semua riwayat</button>`:"<p>Belum ada riwayat. Kerjakan latihan pertamamu.</p>")+`<button class="c no" onclick="resetProg()">Reset progres soal</button>`));
+};
+
+window.delHist=async id=>{
+  if(confirm("Hapus riwayat ini?")){await F.deleteDoc(F.doc(db,"users",U.uid,"attempts",id));hist()}
+};
+
+window.delAll=async()=>{
+  if(!confirm("Hapus SEMUA riwayat? Tindakan ini tidak bisa dibatalkan."))return;
+  const s=await F.getDocs(col("users",U.uid,"attempts"));
+  await Promise.all(s.docs.map(d=>F.deleteDoc(d.ref)));
+  hist();
+};
+
+// Reset progres: semua soal dianggap "belum dikerjakan" lagi
+window.resetProg=async()=>{
+  if(!confirm("Reset progres soal? Semua soal akan dianggap belum dikerjakan. Riwayat skor tidak terhapus."))return;
+  const s=await F.getDocs(col("users",U.uid,"answers"));
+  await Promise.all(s.docs.map(d=>F.deleteDoc(d.ref)));
+  alert("Progres soal sudah direset.");
+  hist();
 };
