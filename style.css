@@ -21,6 +21,6 @@ label{display:block;margin-top:10px;font-weight:700;font-size:.9rem}
 input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 textarea{min-height:90px}
 form .p{margin-top:14px;width:100%}
-.d{background:none;color:var(--bad);padding:4px 0;float:right}
+.d{background:none;color:var(--bad);padding:4px 8px;float:right}
 nav{display:flex;gap:6px;margin-bottom:6px}nav button{flex:1}
 .ok{color:var(--ok)}.no{color:var(--bad)}
