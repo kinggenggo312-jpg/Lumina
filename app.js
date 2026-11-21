@@ -16,10 +16,14 @@ $("#out").onclick=()=>signOut(auth);
 
 onAuthStateChanged(auth,async u=>{
   U=u;$("#auth").hidden=!!u;$("#app").hidden=!u;
-  if(!u)return;
-  isAdmin=(await ensureUser(u))=="admin";
-  cats=(await F.getDocs(col("categories"))).docs.map(d=>({id:d.id,...d.data()}));
-  home();
+  try{u?localStorage.luminaIn=1:localStorage.removeItem("luminaIn")}catch(e){}
+  if(!u){stack=[];return}
+  if(!$("#v").innerHTML.trim())v(empty("Memuat…"));
+  try{
+    const[r,s]=await Promise.all([ensureUser(u),F.getDocs(col("categories"))]);
+    isAdmin=r=="admin";cats=s.docs.map(d=>({id:d.id,...d.data()}));
+    home();
+  }catch(e){v(empty("Gagal memuat. Periksa koneksi internet.")+`<button class="p" onclick="location.reload()">Coba lagi</button>`)}
 });
 
 window.go=id=>{stack.push(id);home()};
