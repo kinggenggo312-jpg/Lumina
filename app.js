@@ -34,7 +34,9 @@ window.home=()=>{
 
 window.mats=async id=>{
   const L=await list("materials",id);M=Object.fromEntries(L.map(m=>[m.id,m]));
-  v(`${bk("home()")}<h2>Materi</h2>`+(L.map((m,i)=>`<button class="c go" onclick="mat('${m.id}','${id}')"><span class="t"><b>${i+1}. ${esc(m.title)}</b><small>${{teks:"Bacaan",video:"Video",pdf:"PDF"}[m.type]||""}</small></span><span class="ch">›</span></button>`).join("")||empty("Belum ada materi di bab ini.")));
+  const g=[["teks","Teks"],["pdf","PDF"],["video","Video"]].map(([t,n])=>{const x=L.filter(m=>m.type==t);
+    return x.length?`<h3>${n} <small>${x.length}</small></h3>`+x.map((m,i)=>`<button class="c go" onclick="mat('${m.id}','${id}')"><span class="t"><b>${i+1}. ${esc(m.title)}</b></span><span class="ch">›</span></button>`).join(""):""}).join("");
+  v(`${bk("home()")}<h2>Materi</h2>`+(g||empty("Belum ada materi di bab ini.")));
 };
 window.mat=(mid,cid)=>{
   const m=M[mid];

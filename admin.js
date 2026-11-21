@@ -35,16 +35,16 @@ window.tab=async k=>{
   const s=await F.getDocs(F.collection(db,k));
   D=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));
   $("#c").innerHTML=`<h2>Tambah baru</h2><form id="f">${S[k].map(fld).join("")}<button class="p">Simpan</button></form><h2>Daftar (${s.size})</h2>`
-    +s.docs.map(d=>{const x=d.data();
+    +s.docs.sort((a,b)=>(b.data().createdAt||0)-(a.data().createdAt||0)).map(d=>{const x=d.data();
       const title=k=="categories"?path(cats.find(c=>c.id==d.id)):(x.title||x.name||x.text);
-      const sub=k=="categories"?"":(k=="questions"?sn(x.set):path(cats.find(c=>c.id==x.category)))+" · "+x.status;
+      const sub=k=="categories"?"":(k=="questions"?sn(x.set):path(cats.find(c=>c.id==x.category)))+" · "+(x.type?x.type+" · ":"")+x.status;
       return`<div class="c"><button class="d" onclick="del('${d.id}')">Hapus</button><button class="d" onclick="edit('${d.id}')">Edit</button><b>${esc(title)}</b><br><small>${esc(sub)}</small></div>`}).join("");
   $("#f").onsubmit=async e=>{
     e.preventDefault();
     const o=Object.fromEntries(new FormData(e.target));
     if(k=="questions"){o.options=[o.o0,o.o1,o.o2,o.o3];["o0","o1","o2","o3"].forEach(z=>delete o[z]);o.answer="ABCD".indexOf(o.answer)}
     if("order"in o)o.order=+o.order||0;
-    if(eid)await F.setDoc(F.doc(db,k,eid),o);else await F.addDoc(F.collection(db,k),o);
+    if(eid)await F.setDoc(F.doc(db,k,eid),o,{merge:true});else await F.addDoc(F.collection(db,k),{...o,createdAt:Date.now()});
     tab(k);
   };
 };
