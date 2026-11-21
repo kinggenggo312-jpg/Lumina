@@ -7,6 +7,7 @@ const path=c=>c?(c.parent?path(cats.find(x=>x.id==c.parent))+" › ":"")+c.name:
 const bk=(fn,t="Kembali")=>`<button class="back" onclick="${fn}">← ${t}</button>`;
 const empty=t=>`<p class="empty">${t}</p>`;
 const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+const dt=t=>t?new Date(t).toLocaleString("id-ID",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
 const card=(fn,label)=>`<button class="c go" onclick="${fn}"><span>${label}</span><span class="ch">›</span></button>`;
 
 $("#login").onclick=login;
@@ -34,18 +35,21 @@ window.home=()=>{
 
 window.mats=async id=>{
   const L=await list("materials",id);M=Object.fromEntries(L.map(m=>[m.id,m]));
-  const g=[["teks","Teks"],["pdf","PDF"],["video","Video"]].map(([t,n])=>{const x=L.filter(m=>m.type==t);
-    return x.length?`<h3>${n} <small>${x.length}</small></h3>`+x.map((m,i)=>`<button class="c go" onclick="mat('${m.id}','${id}')"><span class="t"><b>${i+1}. ${esc(m.title)}</b></span><span class="ch">›</span></button>`).join(""):""}).join("");
-  v(`${bk("home()")}<h2>Materi</h2>`+(g||empty("Belum ada materi di bab ini.")));
+  const T=[["teks","Teks"],["pdf","PDF"],["video","Video"]];
+  v(`${bk("home()")}<h2>Materi</h2>`+(L.length?T.map(([t,n])=>`<button class="c go" onclick="matType('${id}','${t}')"><span class="t"><b>${n}</b><small>${L.filter(m=>m.type==t).length} materi</small></span><span class="ch">›</span></button>`).join(""):empty("Belum ada materi di bab ini.")));
+};
+window.matType=(id,t)=>{
+  const L=Object.values(M).filter(m=>m.type==t);
+  v(`${bk(`mats('${id}')`)}<h2>${{teks:"Teks",pdf:"PDF",video:"Video"}[t]}</h2>`+(L.map((m,i)=>`<button class="c go" onclick="mat('${m.id}','${id}')"><span class="t"><b>${i+1}. ${esc(m.title)}</b><small>${dt(m.createdAt)}</small></span><span class="ch">›</span></button>`).join("")||empty("Belum ada materi jenis ini.")));
 };
 window.mat=(mid,cid)=>{
   const m=M[mid];
-  v(`${bk(`mats('${cid}')`,"Daftar materi")}<article><h3>${esc(m.title)}</h3>${m.type=="teks"?`<p>${esc(m.body).replace(/\n/g,"<br>")}</p>`:`<iframe src="${esc(embed(m))}" allowfullscreen></iframe>`}</article>`);
+  v(`${bk(`matType('${cid}','${m.type}')`,"Daftar materi")}<article><h3>${esc(m.title)}</h3>${m.createdAt?`<small>Diunggah ${dt(m.createdAt)}</small>`:""}${m.type=="teks"?`<p>${esc(m.body).replace(/\n/g,"<br>")}</p>`:`<iframe src="${esc(embed(m))}" allowfullscreen></iframe>`}</article>`);
 };
 
 window.sets=async id=>{
   const L=await list("sets",id);SS=Object.fromEntries(L.map(s=>[s.id,s]));
-  v(`${bk("home()")}<h2>Latihan soal</h2>`+(L.map(s=>card(`quiz('${s.id}','${id}')`,esc(s.name))).join("")||empty("Belum ada set soal di bab ini.")));
+  v(`${bk("home()")}<h2>Latihan soal</h2>`+(L.map(s=>card(`quiz('${s.id}','${id}')`,esc(s.name)+(s.createdAt?`<br><small>${dt(s.createdAt)}</small>`:""))).join("")||empty("Belum ada set soal di bab ini.")));
 };
 
 window.quiz=async(sid,cid)=>{

@@ -1,6 +1,7 @@
 import{auth,db,F,login,signOut,onAuthStateChanged,$,esc,ensureUser}from"./firebase.js";
 let cats=[],SETS=[],D={},cur="categories",eid=null;
 
+const dt=t=>t?new Date(t).toLocaleString("id-ID",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
 $("#login").onclick=login;
 $("#out").onclick=()=>signOut(auth);
 
@@ -38,7 +39,7 @@ window.tab=async k=>{
     +s.docs.sort((a,b)=>(b.data().createdAt||0)-(a.data().createdAt||0)).map(d=>{const x=d.data();
       const title=k=="categories"?path(cats.find(c=>c.id==d.id)):(x.title||x.name||x.text);
       const sub=k=="categories"?"":(k=="questions"?sn(x.set):path(cats.find(c=>c.id==x.category)))+" · "+(x.type?x.type+" · ":"")+x.status;
-      return`<div class="c"><button class="d" onclick="del('${d.id}')">Hapus</button><button class="d" onclick="edit('${d.id}')">Edit</button><b>${esc(title)}</b><br><small>${esc(sub)}</small></div>`}).join("");
+      return`<div class="c"><button class="d" onclick="del('${d.id}')">Hapus</button><button class="d" onclick="edit('${d.id}')">Edit</button><b>${esc(title)}</b><br><small>${esc(sub)}</small>${x.createdAt?`<br><small>Diunggah ${dt(x.createdAt)}</small>`:""}</div>`}).join("");
   $("#f").onsubmit=async e=>{
     e.preventDefault();
     const o=Object.fromEntries(new FormData(e.target));
