@@ -71,3 +71,21 @@ nav button{flex:none;border-radius:999px;padding:8px 16px}
 .ib button{padding:8px 14px}
 header a{text-decoration:none;color:var(--ink)}
 a.c{text-decoration:none;color:var(--ink)}
+form a{color:var(--pri)}
+input[type=radio],input[type=checkbox]{width:auto;flex:none}
+.orow{display:flex;gap:8px;align-items:center;margin-top:8px}
+.orow .ot{flex:1}
+pre{background:var(--soft);padding:12px;border-radius:10px;overflow-x:auto;font:.85rem/1.5 ui-monospace,monospace;margin:8px 0}
+code{font-family:ui-monospace,monospace;background:var(--soft);padding:1px 5px;border-radius:5px}
+pre code{background:none;padding:0}
+.qi{max-width:100%;border-radius:10px;margin:8px 0}
+pre{background:var(--soft);padding:12px;border-radius:10px;overflow-x:auto;font-size:.85rem;line-height:1.45}
+code{font-family:ui-monospace,Menlo,Consolas,monospace}
+:not(pre)>code{background:var(--soft);padding:1px 5px;border-radius:5px}
+.q{font-weight:700}
+.orow{display:flex;gap:8px;align-items:center;margin-top:8px}
+.orow input[type=radio],.orow input[type=checkbox]{width:22px;height:22px;flex:none}
+.orow .d{float:none;flex:none}
+.opt.sel{border-color:var(--pri);background:var(--soft)}
+#es{min-height:120px;margin-bottom:10px}
+.katex{font-size:1.05em}

@@ -1,6 +1,7 @@
 import{auth,db,F,login,signOut,onAuthStateChanged,$,esc,embed,ensureUser}from"./firebase.js";
+import{rich,typeset}from"./rich.js";
 let U,isAdmin=false,cats=[],stack=[],M={},SS={};
-const v=h=>$("#v").innerHTML=h;
+const v=h=>{$("#v").innerHTML=h;typeset($("#v"))};
 const col=(...p)=>F.collection(db,...p);
 const list=async(n,id)=>(await F.getDocs(F.query(col(n),F.where("category","==",id),F.where("status","==","terbit")))).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order||0)-(b.order||0));
 const path=c=>c?(c.parent?path(cats.find(x=>x.id==c.parent))+" › ":"")+c.name:"";
@@ -49,7 +50,7 @@ window.matType=(id,t)=>{
 };
 window.mat=(mid,cid)=>{
   const m=M[mid];
-  v(`${bk(`matType('${cid}','${m.type}')`,"Daftar materi")}<article><h3>${esc(m.title)}</h3>${m.createdAt?`<small>Diunggah ${dt(m.createdAt)}</small>`:""}${m.type=="teks"?`<p>${esc(m.body).replace(/\n/g,"<br>")}</p>`:`<iframe src="${esc(embed(m))}" allowfullscreen></iframe>`}</article>`);
+  v(`${bk(`matType('${cid}','${m.type}')`,"Daftar materi")}<article><h3>${esc(m.title)}</h3>${m.createdAt?`<small>Diunggah ${dt(m.createdAt)}</small>`:""}${m.type=="teks"?`<div>${rich(m.body)}</div>`:`<iframe src="${esc(embed(m))}" allowfullscreen></iframe>`}</article>`);
 };
 
 window.sets=async id=>{
@@ -67,16 +68,32 @@ window.quiz=async(sid,cid)=>{
   let i=0,ok=0;const t0=Date.now();
   const tick=setInterval(()=>{const e=$("#t");if(e)e.textContent=fmt(Math.floor((Date.now()-t0)/1000))},1000);
   const show=()=>{
-    const q=set[i];
-    v(`<div class="bar"><i style="width:${i/n*100}%"></i></div><p class="meta"><small>${esc(SS[sid]?.name||"")} · Soal ${i+1} dari ${n}</small><small id="t">${fmt(Math.floor((Date.now()-t0)/1000))}</small></p><h3 class="q">${esc(q.text)}</h3>`
-      +q.options.map((o,k)=>`<button class="c opt" data-k="${k}"><b>${"ABCD"[k]}</b><span>${esc(o)}</span></button>`).join("")+`<div id="fb"></div>`);
-    document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{
-      const good=+b.dataset.k==q.answer;if(good)ok++;
-      document.querySelectorAll("[data-k]").forEach(x=>{x.disabled=true;if(+x.dataset.k==q.answer)x.classList.add("right");else if(x==b)x.classList.add("wrong")});
-      $("#fb").innerHTML=`<div class="note ${good?"ok":"no"}"><b>${good?"Benar":"Kurang tepat"}</b>${q.explain?`<p>${esc(q.explain)}</p>`:""}</div><button class="p" id="n">${i+1<n?"Soal berikutnya":"Lihat skor"}</button>`;
-      $("#n").onclick=()=>++i<n?show():fin();
+    const q=set[i],ty=q.type||"pg",ess=ty=="essay";
+    const head=`<div class="bar"><i style="width:${i/n*100}%"></i></div><p class="meta"><small>${esc(SS[sid]?.name||"")} · Soal ${i+1} dari ${n}</small><small id="t">${fmt(Math.floor((Date.now()-t0)/1000))}</small></p><div class="q">${rich(q.text)}</div>`;
+    const opts=(q.options||[]).map((o,k)=>`<button class="c opt" data-k="${k}"><b>${"ABCDEFGH"[k]}</b><span>${rich(o)}</span></button>`).join("");
+    v(head+(ess?`<textarea id="es" placeholder="Tulis jawabanmu di sini"></textarea><button class="p" id="sk">Lihat kunci jawaban</button>`:(ty=="pgk"?`<p><small>Pilih semua jawaban yang benar.</small></p>`:"")+opts+(ty=="pgk"?`<button class="p" id="ck">Periksa jawaban</button>`:""))+`<div id="fb"></div>`);
+    const done=(good,extra="")=>{
+      if(good)ok++;
+      $("#fb").innerHTML=`<div class="note ${good?"ok":"no"}"><b>${ess?(good?"Sesuai":"Belum sesuai"):(good?"Benar":"Kurang tepat")}</b>${extra}${q.explain?`<p>${rich(q.explain)}</p>`:""}</div><button class="p" id="n">${i+1<n?"Soal berikutnya":"Lihat skor"}</button>`;
+      typeset($("#fb"));$("#n").onclick=()=>++i<n?show():fin();
       F.setDoc(F.doc(db,"users",U.uid,"answers",q.id),{ok:good,at:Date.now()});
-    });
+    };
+    const bs=[...document.querySelectorAll("[data-k]")];
+    const mark=(ans,sel)=>bs.forEach(x=>{const k=+x.dataset.k;x.disabled=true;if(ans.includes(k))x.classList.add("right");else if(sel.includes(k))x.classList.add("wrong")});
+    if(ess){$("#sk").onclick=()=>{
+      $("#es").disabled=true;$("#sk").remove();
+      $("#fb").innerHTML=`<div class="note"><b>Kunci jawaban</b><p>${rich(q.key||"-")}</p></div><p><small>Bandingkan dengan jawabanmu, lalu nilai sendiri:</small></p><div class="row"><button class="p" id="y">Sudah sesuai</button><button id="x">Belum sesuai</button></div>`;
+      typeset($("#fb"));$("#y").onclick=()=>done(true);$("#x").onclick=()=>done(false);
+    }}
+    else if(ty=="pgk"){
+      bs.forEach(b=>b.onclick=()=>b.classList.toggle("sel"));
+      $("#ck").onclick=()=>{
+        const sel=bs.filter(b=>b.classList.contains("sel")).map(b=>+b.dataset.k),ans=q.answers||[];
+        if(!sel.length)return alert("Pilih minimal satu jawaban.");
+        mark(ans,sel);$("#ck").remove();
+        done(sel.length==ans.length&&ans.every(k=>sel.includes(k)));
+      };
+    }else bs.forEach(b=>b.onclick=()=>{const k=+b.dataset.k;mark([q.answer],[k]);done(k==q.answer)});
   };
   const fin=async()=>{
     clearInterval(tick);
