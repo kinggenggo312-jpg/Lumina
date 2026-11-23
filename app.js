@@ -55,7 +55,7 @@ window.mat=(mid,cid)=>{
 
 window.sets=async id=>{
   const L=await list("sets",id);SS=Object.fromEntries(L.map(s=>[s.id,s]));
-  v(`${bk("home()")}<h2>Latihan soal</h2>`+(L.map(s=>card(`quiz('${s.id}','${id}')`,esc(s.name)+(s.createdAt?`<br><small>${dt(s.createdAt)}</small>`:""))).join("")||empty("Belum ada set soal di bab ini.")));
+  v(`${bk("home()")}<h2>Latihan soal</h2>`+(L.map(s=>card(`quiz('${s.id}','${id}')`,esc(s.name)+(s.limit?`<br><small>Batas waktu ${s.limit} menit</small>`:"")+(s.createdAt?`<br><small>${dt(s.createdAt)}</small>`:""))).join("")||empty("Belum ada set soal di bab ini.")));
 };
 
 window.quiz=async(sid,cid)=>{
@@ -65,11 +65,12 @@ window.quiz=async(sid,cid)=>{
   const rank=q=>!an[q.id]?0:an[q.id].ok?2:1;
   const set=qs.sort((a,b)=>rank(a)-rank(b)||Math.random()-.5),n=set.length;
   if(!n)return v(`${bk(`sets('${cid}')`)}${empty("Set ini belum punya soal.")}`);
-  let i=0,ok=0;const t0=Date.now();
-  const tick=setInterval(()=>{const e=$("#t");if(e)e.textContent=fmt(Math.floor((Date.now()-t0)/1000))},1000);
+  let i=0,ok=0,over=false;const t0=Date.now(),lim=(SS[sid]?.limit||0)*60;
+  const left=()=>Math.max(0,lim-Math.floor((Date.now()-t0)/1000));
+  const tick=setInterval(()=>{const e=$("#t");if(e){e.textContent=fmt(lim?left():Math.floor((Date.now()-t0)/1000));e.classList.toggle("warn",!!lim&&left()<=30)}if(lim&&left()<=0)fin(true)},1000);
   const show=()=>{
     const q=set[i],ty=q.type||"pg",ess=ty=="essay";
-    const head=`<div class="bar"><i style="width:${i/n*100}%"></i></div><p class="meta"><small>${esc(SS[sid]?.name||"")} · Soal ${i+1} dari ${n}</small><small id="t">${fmt(Math.floor((Date.now()-t0)/1000))}</small></p><div class="q">${rich(q.text)}</div>`;
+    const head=`<div class="bar"><i style="width:${i/n*100}%"></i></div><p class="meta"><small>${esc(SS[sid]?.name||"")} · Soal ${i+1} dari ${n}</small><small>${lim?"Sisa waktu ":""}<span id="t">${fmt(lim?left():Math.floor((Date.now()-t0)/1000))}</span></small></p><div class="q">${rich(q.text)}</div>${q.img?`<img class="qi" src="${q.img}" alt="Gambar soal">`:""}`;
     const opts=(q.options||[]).map((o,k)=>`<button class="c opt" data-k="${k}"><b>${"ABCDEFGH"[k]}</b><span>${rich(o)}</span></button>`).join("");
     v(head+(ess?`<textarea id="es" placeholder="Tulis jawabanmu di sini"></textarea><button class="p" id="sk">Lihat kunci jawaban</button>`:(ty=="pgk"?`<p><small>Pilih semua jawaban yang benar.</small></p>`:"")+opts+(ty=="pgk"?`<button class="p" id="ck">Periksa jawaban</button>`:""))+`<div id="fb"></div>`);
     const done=(good,extra="")=>{
@@ -95,10 +96,10 @@ window.quiz=async(sid,cid)=>{
       };
     }else bs.forEach(b=>b.onclick=()=>{const k=+b.dataset.k;mark([q.answer],[k]);done(k==q.answer)});
   };
-  const fin=async()=>{
-    clearInterval(tick);
+  const fin=async(to)=>{
+    if(over)return;over=true;clearInterval(tick);
     const score=Math.round(ok/n*100),sec=Math.round((Date.now()-t0)/1000);
-    v(`<div class="res"><div class="big">${score}</div><p>${ok} dari ${n} benar · ${fmt(sec)}</p><button class="p" onclick="sets('${cid}')">Selesai</button></div>`);
+    v(`<div class="res"><div class="big">${score}</div><p>${to?"Waktu habis. ":""}${ok} dari ${n} benar · ${fmt(sec)}</p><button class="p" onclick="sets('${cid}')">Selesai</button></div>`);
     await F.addDoc(col("users",U.uid,"attempts"),{cat:cid,set:sid,name:SS[sid]?.name||"",score,ok,total:n,sec,at:Date.now()});
   };
   show();

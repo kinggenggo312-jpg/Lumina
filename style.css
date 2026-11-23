@@ -89,3 +89,5 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .opt.sel{border-color:var(--pri);background:var(--soft)}
 #es{min-height:120px;margin-bottom:10px}
 .katex{font-size:1.05em}
+.qi{display:block;max-width:100%;height:auto;margin:8px 0;border:1px solid var(--line);border-radius:10px;background:#fff}
+.warn{color:var(--bad);font-weight:700}

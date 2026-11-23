@@ -1,6 +1,6 @@
 import{db,F,$,esc}from"./firebase.js";
 import{fromCsv,parse}from"./parse.js";
-import{rich,typeset}from"./rich.js";
+import{rich,typeset,imgTag}from"./rich.js";
 
 const PDF="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/",TESS="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",LT="ABCDEFGH";
 const loaded={};
@@ -72,7 +72,7 @@ export function renderImport(box,SETS,sn){
   const preview=()=>{
     $("#imout").innerHTML=`<h2>Pratinjau (${items.length} soal)</h2>`+items.map((q,i)=>`<div class="c">
       <label style="margin:0"><input type="checkbox" data-i="${i}" checked style="width:auto"> Soal ${i+1} <small>(${q.type})</small></label>
-      <div>${rich(q.text)}</div>${q.type=="bs"?"":q.options.map((o,k)=>`<small>${LT[k]}. </small>${rich(o)}<br>`).join("")}${ctl(q,i)}</div>`).join("")
+      <div>${rich(q.text)}</div>${imgTag(q.img)}${q.type=="bs"?"":q.options.map((o,k)=>`<small>${LT[k]}. </small>${rich(o)}<br>`).join("")}${ctl(q,i)}</div>`).join("")
       +`<button class="p" id="imsave">Simpan soal terpilih</button>`;
     typeset($("#imout"));$("#imsave").onclick=save;
   };
@@ -83,7 +83,7 @@ export function renderImport(box,SETS,sn){
     if(!pick.length)return alert("Tidak ada soal yang dicentang.");
     const docs=[];let bad=0;
     pick.forEach(({q,i})=>{
-      const o={set,type:q.type,text:q.text,explain:q.explain||"",status:"aktif"};
+      const o={set,type:q.type,text:q.text,explain:q.explain||"",status:"aktif"};if(q.img)o.img=q.img;
       if(q.type=="essay")o.key=document.querySelector(`[data-k="${i}"]`).value.trim();
       else{
         o.options=q.options;

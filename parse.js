@@ -25,12 +25,13 @@ export function fromCsv(text){
   const ix=re=>has?hd.findIndex(h=>re.test(h)):-1;
   const ti=has?ix(/^(pertanyaan|soal|question)$/):0,yi=ix(/^(tipe|type|jenis)$/),ai=has?ix(/^(jawaban|kunci|answer)$/):5,ei=has?ix(/^(pembahasan|penjelasan)$/):6;
   const oi=has?hd.map((h,i)=>/^[a-h]$/.test(h)?i:-1).filter(i=>i>=0):[1,2,3,4];
+  const gi=ix(/^(gambar|image|img)$/);
   return rows.slice(has?1:0).map(r=>{
     const g=i=>(i>=0?r[i]||"":"").trim(),a=g(ai),opts=oi.map(g);
     while(opts.length&&!opts.at(-1))opts.pop();
     let type=TYPE(g(yi));
     if(!type)type=opts.length>=2?(letters(a,opts.length).length>1?"pgk":"pg"):TF(a)>=0?"bs":"essay";
-    const q={type,text:g(ti),options:[],answer:-1,answers:[],key:"",explain:g(ei)};
+    const q={type,text:g(ti),options:[],answer:-1,answers:[],key:"",explain:g(ei),img:/^https:\/\//.test(g(gi))?g(gi):""};
     if(type=="pg"||type=="pgk"){q.options=opts;const l=letters(a,opts.length);if(type=="pg")q.answer=l.length?l[0]:-1;else q.answers=l}
     else if(type=="bs"){q.options=["Benar","Salah"];q.answer=TF(a)}
     else q.key=a;

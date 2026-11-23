@@ -18,3 +18,4 @@ export async function typeset(root){
   await loadK();
   e.forEach(n=>{const m=n.dataset.m;if(window.katex)try{katex.render(m,n,{throwOnError:false});return}catch(_){}n.textContent="$"+m+"$"});
 }
+export const imgTag=s=>/^(data:image\/|https:\/\/)/.test(s||"")?`<img class="qi" src="${esc(s)}" alt="Gambar soal">`:"";
