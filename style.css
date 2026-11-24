@@ -91,3 +91,4 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .katex{font-size:1.05em}
 .qi{display:block;max-width:100%;height:auto;margin:8px 0;border:1px solid var(--line);border-radius:10px;background:#fff}
 .warn{color:var(--bad);font-weight:700}
+input.sel{width:22px;height:22px;float:left;margin:2px 10px 0 0}

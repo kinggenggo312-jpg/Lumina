@@ -32,7 +32,7 @@ const fld=([n,l,t,o])=>`<label>${l}</label>`+(
   :`<input name="${n}" type="${t=="num"?"number":"text"}">`);
 
 window.tab=async k=>{
-  const prev=cur;cur=k;eid=null;if(k=="questions"&&prev!="questions")qsel="";
+  const prev=cur;cur=k;eid=null;if(k=="questions"&&prev!="questions")qsel="";if(k=="materials"&&prev!="materials")msel="";
   cats=(await F.getDocs(F.collection(db,"categories"))).docs.map(d=>({id:d.id,...d.data()}));
   SETS=(await F.getDocs(F.collection(db,"sets"))).docs.map(d=>({id:d.id,...d.data()}));
   if(k=="import")return renderImport($("#c"),SETS,sn);
@@ -42,7 +42,7 @@ window.tab=async k=>{
   const row=d=>{const x=d.data();
     const title=k=="categories"?path(cats.find(c=>c.id==d.id)):(x.title||x.name||x.text||"(soal berupa gambar)");
     const sub=k=="categories"?"":k=="questions"?TL[x.type||"pg"]+(x.img?" · ada gambar":"")+" · "+x.status:path(cats.find(c=>c.id==x.category))+" · "+(k=="materials"&&x.type?x.type+" · ":"")+x.status;
-    return`<div class="c"><button class="d" onclick="del('${d.id}')">Hapus</button><button class="d" onclick="edit('${d.id}')">Edit</button><b>${esc(String(title).slice(0,160))}</b><br><small>${esc(sub)}</small>${x.createdAt?`<br><small>Diunggah ${dt(x.createdAt)}</small>`:""}</div>`};
+    return`<div class="c">${(k=="questions"&&qsel)||(k=="materials"&&msel)?`<input type="checkbox" class="sel" data-id="${d.id}" aria-label="Pilih">`:""}<button class="d" onclick="del('${d.id}')">Hapus</button><button class="d" onclick="edit('${d.id}')">Edit</button><b>${esc(String(title).slice(0,160))}</b><br><small>${esc(sub)}</small>${x.createdAt?`<br><small>Diunggah ${dt(x.createdAt)}</small>`:""}</div>`};
   const all=s.docs.sort((a,b)=>(b.data().createdAt||0)-(a.data().createdAt||0));
   let list;
   if(k=="questions"){
@@ -54,7 +54,16 @@ window.tab=async k=>{
       list=gs.map(([id,name,c])=>`<button class="c go" onclick="pickSet('${id}')"><span class="t"><b>${esc(name)}</b><small>${c} soal</small></span><span class="ch">›</span></button>`).join("")||'<p class="empty">Belum ada set soal. Buat dulu di tab Set Soal.</p>';
     }else{
       const L=all.filter(q=>qsel=="_none"?!known.has(q.data().set):q.data().set==qsel);
-      list=`<button class="back" onclick="pickSet('')">← Semua set</button><h3>${esc(qsel=="_none"?NO:sn(qsel))} <small>${L.length} soal</small></h3>${L.length?`<button class="dg" onclick="delSetQ()">Hapus semua soal di set ini</button>`:""}`+(L.map(row).join("")||'<p class="empty">Belum ada soal di set ini.</p>');
+      list=`<button class="back" onclick="pickSet('')">← Semua set</button><h3>${esc(qsel=="_none"?NO:sn(qsel))} <small>${L.length} soal</small></h3>${bulk(L.length,"Hapus semua soal di set ini","delSetQ")}`+(L.map(row).join("")||'<p class="empty">Belum ada soal di set ini.</p>');
+    }
+  }else if(k=="materials"){
+    const known=new Set(cats.map(c=>c.id)),NOC="Tanpa kategori / kategori dihapus";
+    if(!msel){
+      const g={};all.forEach(m=>{const c=known.has(m.data().category)?m.data().category:"_none";g[c]=(g[c]||0)+1});
+      list=Object.entries(g).map(([id,c])=>[id,id=="_none"?NOC:path(cats.find(x=>x.id==id)),c]).sort((a,b)=>a[1].localeCompare(b[1],"id",{numeric:true})).map(([id,name,c])=>`<button class="c go" onclick="pickCat('${id}')"><span class="t"><b>${esc(name)}</b><small>${c} materi</small></span><span class="ch">›</span></button>`).join("")||'<p class="empty">Belum ada materi.</p>';
+    }else{
+      const L=all.filter(m=>msel=="_none"?!known.has(m.data().category):m.data().category==msel);
+      list=`<button class="back" onclick="pickCat('')">← Semua kategori</button><h3>${esc(msel=="_none"?NOC:path(cats.find(x=>x.id==msel)))} <small>${L.length} materi</small></h3>${bulk(L.length,"Hapus semua materi di kategori ini","delCatM")}`+(L.map(row).join("")||'<p class="empty">Belum ada materi di kategori ini.</p>');
     }
   }else list=all.map(row).join("");
   $("#c").innerHTML=`<h2>Tambah baru</h2>${k=="questions"?'<div id="qf"></div>':`<form id="f">${S[k].map(fld).join("")}<button class="p">Simpan</button></form>`}<h2>${k=="questions"?"Daftar soal":`Daftar (${s.size})`}</h2>`+list;
@@ -93,6 +102,27 @@ window.delSetQ=async()=>{
     }
   }catch(e){return alert("Gagal menghapus: "+e.message)}
   tab("questions");
+};
+let msel="";
+const delMany=async(c,ids)=>{
+  try{for(let n=0;n<ids.length;n+=400){const b=F.writeBatch(db);ids.slice(n,n+400).forEach(id=>b.delete(F.doc(db,c,id)));await b.commit()}return true}
+  catch(e){alert("Gagal menghapus: "+e.message);return false}
+};
+const bulk=(n,label,fn)=>n?`<div class="row"><button onclick="selAll()">Pilih semua</button><button class="dg" style="margin:0" onclick="delSel()">Hapus terpilih</button></div><button class="dg" onclick="${fn}()">${label}</button>`:"";
+window.selAll=()=>{const b=[...document.querySelectorAll(".sel")],on=b.some(x=>!x.checked);b.forEach(x=>x.checked=on)};
+window.delSel=async()=>{
+  const ids=[...document.querySelectorAll(".sel:checked")].map(x=>x.dataset.id);
+  if(!ids.length)return alert("Centang dulu item yang ingin dihapus.");
+  if(!confirm("Hapus "+ids.length+" item yang dipilih? Tindakan ini tidak bisa dibatalkan."))return;
+  if(await delMany(cur,ids))tab(cur);
+};
+window.pickCat=id=>{msel=id;tab("materials")};
+window.delCatM=async()=>{
+  const known=new Set(cats.map(c=>c.id));
+  const ids=Object.entries(D).filter(([,x])=>msel=="_none"?!known.has(x.category):x.category==msel).map(([id])=>id);
+  if(!ids.length)return;
+  if(!confirm("Hapus SEMUA "+ids.length+" materi di kategori ini? Tindakan ini tidak bisa dibatalkan."))return;
+  if(await delMany("materials",ids))tab("materials");
 };
 window.pickSet=id=>{qsel=id;tab("questions")};
 
